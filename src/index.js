@@ -1,90 +1,35 @@
-const swiper = new Swiper(".swiper", {
-   // Optional parameters
-   loop: true,
-   autoplay: true,
+import { swiper } from "./swiperConfig.js";
+import { loadInitialGallery } from "./gallery.js";
+import {
+   addImages,
+   clearGallery,
+   deleteLastImage,
+   reverseGallery,
+} from "./uiHandlers.js";
 
-   // If we need pagination
-   pagination: {
-      el: ".swiper-pagination",
-   },
-
-   // Navigation arrows
-   navigation: {
-      nextEl: ".swiper-button-next",
-      prevEl: ".swiper-button-prev",
-   },
-});
-
-let startIndex = 0;
-
-async function gallery() {
+(async function initializeGallery() {
    try {
-      const response = await fetch("https://picsum.photos/v2/list");
-      const json = await response.json();
+      const { json, startIndex } = await loadInitialGallery();
+      let currentIndex = startIndex;
 
-      const galleryItems = document.querySelectorAll(".swiper-slide");
-
-      json.slice(0, 4).forEach((photo, index) => {
-         if (index < galleryItems.length) {
-            const slide = galleryItems[index];
-            const img = document.createElement("img");
-            img.src = photo.download_url;
-            img.alt = photo.author;
-            slide.append(img);
-         }
+      document.getElementById("add").addEventListener("click", () => {
+         addImages(json, currentIndex, swiper);
+         currentIndex += 4;
       });
 
-      startIndex = 4;
-
-      const addImageBtn = document.getElementById("add");
-      const clearGalleryBtn = document.getElementById("clear");
-      const deleteLastImg = document.getElementById("delete");
-      const reverseBtn = document.getElementById("reverse");
-      addImageBtn.addEventListener("click", () => {
-         const galleryContainer = document.querySelector(".swiper-wrapper");
-         const slice = json.slice(startIndex, startIndex + 4);
-
-         slice.forEach((photo) => {
-            const slide = document.createElement("div");
-            const img = document.createElement("img");
-            slide.classList.add("swiper-slide");
-            img.src = photo.download_url;
-            img.alt = photo.author;
-            slide.appendChild(img);
-            galleryContainer.appendChild(slide);
-         });
-
-         startIndex += 4;
-         swiper.update();
-         swiper.pagination.render();
-         swiper.pagination.update();
+      document.getElementById("clear").addEventListener("click", () => {
+         clearGallery();
+         currentIndex = 0;
       });
-      clearGalleryBtn.addEventListener("click", () => {
-         const galleryContainer = document.querySelector(".swiper-wrapper");
-         galleryContainer.innerHTML = "";
-         startIndex = 0;
+
+      document.getElementById("delete").addEventListener("click", () => {
+         deleteLastImage(swiper);
       });
-      deleteLastImg.addEventListener("click", () => {
-         const galleryList = document.querySelectorAll(".swiper-slide");
-         if (galleryList.length > 0) {
-            const lastSlide = galleryList[galleryList.length - 1];
-            lastSlide.parentNode.removeChild(lastSlide);
-            swiper.update();
-         }
-      });
-      reverseBtn.addEventListener("click", () => {
-         const galleryList = document.querySelectorAll(".swiper-slide");
-         const arrayOfImg = Array.from(galleryList);
-         const galleryContainer = document.querySelector(".swiper-wrapper");
-         arrayOfImg.reverse();
-         galleryContainer.innerHTML = "";
-         arrayOfImg.map((slide) => {
-            galleryContainer.appendChild(slide);
-         });
+
+      document.getElementById("reverse").addEventListener("click", () => {
+         reverseGallery();
       });
    } catch (error) {
-      alert(error);
+      alert("Помилка завантаження галереї: " + error);
    }
-}
-
-gallery();
+})();
